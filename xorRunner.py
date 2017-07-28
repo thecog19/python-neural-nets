@@ -4,31 +4,31 @@ import neat
 import visualize
 import random
 
-examples = 40
-num_inputs = 4
+examples = 80.0
+
+def binary_encode(i, num_digits):
+  return tuple([i >> d & 1 for d in range(num_digits)])
 
 def generate_data():
-  choices = [0.0, 1.0]
   inputs = []
   outputs = []
-  y = 0
-  while y < examples:
-    x = 0
-    count = 0
-    temp_array = []
-    while x < num_inputs: 
-      num = random.choice(choices)
-      temp_array.append(num)
-      if num == 1.0:
-        count += 1
-      x += 1
-    inputs.append(temp_array)
-    if count == 1:
-      outputs.append((1.0,))
+  x = 0
+  while x < examples:
+    number = random.randint(1,127)
+    inputs.append(binary_encode(number, 7))
+    if (number % 3 == 0) and (number % 5 == 0):
+      outputs.append((0.0,0.0,0.0,1.0))
+    elif number % 3 == 0:
+      outputs.append((0.0,1.0,0.0,0.0))
+    elif number % 5 == 0:
+      outputs.append((0.0,0.0,1.0,0.0))
     else:
-      outputs.append((0.0,))
-    y += 1
+      outputs.append((1.0,0.0,0.0,0.0))
+
+    x += 1
+
   return [inputs, outputs]
+  
 
 
 data = generate_data()
@@ -43,7 +43,9 @@ def eval_genomes(genomes, config):
         net = neat.nn.FeedForwardNetwork.create(genome, config)
         for xi, xo in zip(xor_inputs, xor_outputs):
             output = net.activate(xi)
-            genome.fitness -= (((output[0] - xo[0]) ** 2) / examples)
+            x = (output.index(max(output)) != xo.index(max(xo))) / examples
+            genome.fitness -= x
+
 
 def run(config_file):
     # Load configuration.
@@ -61,7 +63,7 @@ def run(config_file):
     p.add_reporter(neat.Checkpointer(5))
 
     # Run for up to 300 generations.
-    winner = p.run(eval_genomes, 300)
+    winner = p.run(eval_genomes, 10000)
 
     # Display the winning genome.
     print('\nBest genome:\n{!s}'.format(winner))
@@ -73,13 +75,13 @@ def run(config_file):
         output = winner_net.activate(xi)
         print("input {!r}, expected output {!r}, got {!r}".format(xi, xo, output))
 
-    node_names = {-1:'A', -2: 'B', -3: 'C', 0:'A XOR B'}
+    node_names = {}
     visualize.draw_net(config, winner, True, node_names=node_names)
     visualize.plot_stats(stats, ylog=False, view=True)
     visualize.plot_species(stats, view=True)
 
     p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-4')
-    p.run(eval_genomes, 10)
+    p.run(eval_genomes, 100)
 
 
 if __name__ == '__main__':
