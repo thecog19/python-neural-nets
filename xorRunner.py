@@ -4,7 +4,7 @@ import neat
 import visualize
 import random
 
-examples = 80.0
+examples = 127.0
 
 def binary_encode(i, num_digits):
   return tuple([i >> d & 1 for d in range(num_digits)])
@@ -12,9 +12,9 @@ def binary_encode(i, num_digits):
 def generate_data():
   inputs = []
   outputs = []
-  x = 0
+  x = 1
   while x < examples:
-    number = random.randint(1,127)
+    number = x
     inputs.append(binary_encode(number, 7))
     if (number % 3 == 0) and (number % 5 == 0):
       outputs.append((0.0,0.0,0.0,1.0))
